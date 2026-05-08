@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
+<title>SimpleFinance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#f0f4f8;--bg2:#fff;--bg3:#f8fafc;--t1:#0f172a;--t2:#334155;--t3:#94a3b8;--accent:#0ea5e9;--accent2:#0284c7;--red:#f43f5e;--green:#10b981;--orange:#f47245;--purple:#a855f7;--border:#e2e8f0;--sidebar:#0f172a;--r:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#1e293b;color:var(--t1);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit}input:focus,select:focus,textarea:focus{outline:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes growUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.fade-in{animation:fadeIn .4s ease-out both}.hidden{display:none!important}
+.device-bar{width:100%;padding:10px 0;display:flex;justify-content:center;gap:8px;background:#0f172a;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:200}
+.device-btn{padding:8px 20px;border-radius:10px;border:none;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;transition:all .2s}
+.device-btn.active{background:var(--accent);color:#fff}.device-btn:not(.active){background:#1e293b;color:#94a3b8}
+.device-btn .size{font-size:10px;opacity:.6}
+.frame{margin:20px auto;border-radius:16px;border:3px solid #334155;overflow:hidden;background:var(--bg);position:relative;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;transition:width .4s ease,border-radius .3s}
+.frame.mobile{width:390px;border-radius:32px}.frame.tablet{width:820px;border-radius:20px}.frame.desktop{width:1200px}
+.sidebar{background:var(--sidebar);color:#e2e8f0;display:flex;flex-direction:column;flex-shrink:0;transition:width .3s}
+.sidebar.desktop{width:220px;padding:24px 14px}.sidebar.tablet{width:68px;padding:16px 8px}
+.sidebar .logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.sidebar.tablet .logo-wrap{justify-content:center}
+.logo-icon{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#0ea5e9,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff}
+.logo-text{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:#f1f5f9}
+.sidebar-nav{display:flex;flex-direction:column;gap:4px;flex:1}
+.sidebar-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;border:none;width:100%;font-size:14px;font-weight:500;background:transparent;color:#94a3b8;transition:all .15s;text-align:left}
+.sidebar.tablet .sidebar-btn{justify-content:center;padding:11px 0}
+.sidebar-btn.active{background:rgba(14,165,233,.15);color:#38bdf8;font-weight:700}
+.sidebar-btn .emoji{font-size:18px}
+.sidebar-footer{border-top:1px solid #1e293b;padding-top:14px;display:flex;align-items:center;gap:10px}
+.sidebar.tablet .sidebar-footer{justify-content:center}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#0ea5e9,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff}
+.main{flex:1;overflow:auto;position:relative}
+.main-inner{margin:0 auto}
+.main.mobile .main-inner{padding:20px 16px 110px}
+.main.tablet .main-inner{padding:24px 20px 30px}
+.main.desktop .main-inner{padding:28px 36px 30px;max-width:960px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.header-date{font-size:11px;color:var(--t3);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.header-title{font-family:'Fraunces',serif;font-weight:700;color:var(--t1);margin-top:2px}
+.mobile .header-title{font-size:22px}.tablet .header-title,.desktop .header-title{font-size:26px}
+.sg{display:grid;gap:12px;margin-bottom:22px}.sg.s1{grid-template-columns:1fr}.sg.s3{grid-template-columns:1fr 1fr 1fr}
+.sc{background:#fff;border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.05);border-left:4px solid var(--accent)}.sc .inn{padding:18px 16px}
+.sc .lbl{font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px}.sc .val{font-family:'Fraunces',serif;font-weight:700;color:var(--t1);margin-top:6px}
+.mobile .sc .val{font-size:24px}.tablet .sc .val,.desktop .sc .val{font-size:28px}.sc .sub{font-size:11px;font-weight:600;margin-top:4px}
+.tc{display:grid;gap:18px}.tc.s1{grid-template-columns:1fr}.tc.s2{grid-template-columns:1fr 1fr}
+.card{background:#fff;padding:18px;border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-t{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.fi{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);font-size:14px;color:var(--t1);margin-bottom:10px}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+.fr{display:flex;gap:10px;margin-bottom:12px}.fr .fi{margin-bottom:0}
+.bp{width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;font-size:14px;font-weight:700;transition:transform .1s}.bp:active{transform:scale(.97)}
+.bd{padding:11px;border-radius:12px;border:1.5px solid var(--red);background:transparent;color:var(--red);font-size:13px;font-weight:700;transition:all .15s}.bd:hover{background:var(--red);color:#fff}
+.badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;display:inline-block;margin-top:2px}
+.badge.paid{background:#10b98120;color:#10b981}.badge.pending{background:#f4724520;color:#f47245}.badge.upcoming{background:#818cf820;color:#818cf8}
+.tg{display:grid;gap:8px}.tg.s1{grid-template-columns:1fr}.tg.s2{grid-template-columns:1fr 1fr}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid var(--border);position:relative}
+.tr .left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}.tr .emoji{font-size:18px;flex-shrink:0}
+.tr .desc{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .date{font-size:10px;color:var(--t3)}.tr .right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tr .amt{font-size:13px;font-weight:700}.tr .amt.neg{color:var(--red)}.tr .amt.pos{color:var(--green)}
+.ib{width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:var(--t3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.ib:hover{background:#f1f5f9}.ib.del:hover{background:#f43f5e15;color:var(--red)}.ib.edit:hover{background:#0ea5e915;color:var(--accent)}
+.bn{position:absolute;bottom:0;left:0;width:100%;background:linear-gradient(to top,#f0f4f8 70%,transparent);padding:10px 12px 16px;z-index:50}
+.bni{display:flex;justify-content:space-around;align-items:center;background:#fff;border-radius:18px;padding:8px 4px;box-shadow:0 -2px 16px rgba(0,0,0,.06);border:1px solid var(--border)}
+.nb{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;transition:color .2s}
+.nb .icon{font-size:17px}.nb .label{font-size:9px;font-weight:700}.nb.active{color:var(--accent)}.nb:not(.active){color:var(--t3)}
+.fab{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:3px solid var(--bg);color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(14,165,233,.3)}
+.fab.mf{margin-top:-22px}.fab.cf{position:absolute;bottom:22px;right:22px;z-index:50;width:52px;height:52px;border-radius:14px;border:none}
+.mo{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;justify-content:center}
+.mo.mobile{align-items:flex-end}.mo:not(.mobile){align-items:center}
+.mb{background:#fff;padding:26px 22px 34px;box-shadow:0 -4px 40px rgba(0,0,0,.12);max-height:90%;overflow-y:auto}
+.mb.mobile{width:100%;border-radius:22px 22px 0 0;animation:slideUp .3s ease-out}.mb:not(.mobile){width:440px;border-radius:22px;animation:popIn .25s ease-out}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.mt{font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--t1)}
+.mc{width:34px;height:34px;border-radius:10px;background:#f1f5f9;border:none;font-size:16px;color:var(--t2)}
+.tt{display:flex;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:16px;gap:2px}
+.tb{flex:1;padding:10px 0;border-radius:8px;border:none;font-size:13px;font-weight:700}
+.tb.ae{background:#f43f5e15;color:#f43f5e}.tb.ai{background:#10b98115;color:#10b981}.tb.off{background:transparent;color:#94a3b8}
+.cg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.cb{padding:7px 12px;border-radius:10px;font-size:11px;font-weight:600;border:1.5px solid var(--border);background:transparent;color:var(--t3)}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;background:#0f172a;color:#38bdf8;padding:12px 24px;border-radius:14px;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);border:1px solid #1e293b;animation:fadeIn .3s ease-out}
+.sync-ind{position:absolute;top:8px;right:12px;z-index:60;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);border:1px solid var(--border)}
+.sd{width:8px;height:8px;border-radius:50%}.sd.on{background:#10b981}.sd.off{background:#f43f5e}.sd.sync{background:#f59e0b}
+.es{text-align:center;padding:40px 20px}.es .ei{font-size:48px;margin-bottom:12px}.es .et{font-size:16px;font-weight:700;color:var(--t1);margin-bottom:6px}.es .esub{font-size:13px;color:var(--t3);line-height:1.6}
+.co{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center}
+.cbox{background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:popIn .25s ease-out;text-align:center}
+.cbox h3{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px}.cbox p{font-size:13px;color:var(--t3);margin-bottom:20px;line-height:1.5}
+.cbtns{display:flex;gap:10px}.cbtns button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:700;border:none}
+.cbtn-c{background:#f1f5f9;color:var(--t2)}.cbtn-d{background:var(--red);color:#fff}
+/* Tips */
+.tip-card{padding:16px;border-radius:14px;border:1px solid;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+.tip-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.tip-text h4{font-size:13px;font-weight:700;margin-bottom:4px}.tip-text p{font-size:12px;line-height:1.5;color:var(--t2)}
+/* Comparator */
+.qt-card{padding:16px;border-radius:14px;border:1px solid var(--border);background:#fff;margin-bottom:12px;position:relative}
+.qt-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qt-bank{font-size:14px;font-weight:700;color:var(--t1)}.qt-actions{display:flex;gap:4px}
+.qt-metric{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.qt-metric:last-child{border-bottom:none}
+.qt-ml{color:var(--t3)}.qt-mv{font-weight:700;color:var(--t1)}
+.qt-winner{border-color:var(--green)!important;background:linear-gradient(135deg,#10b98106,#0ea5e904)!important}
+.qt-winner-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:#10b98118;color:#10b981}
+.verdict{padding:18px;border-radius:16px;background:linear-gradient(135deg,#0ea5e908,#10b98108);border:1px solid #0ea5e920;margin-top:16px}
+.verdict h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px}.verdict p{font-size:13px;color:var(--t2);line-height:1.6}
+/* Invest section */
+.inv-card{padding:18px;border-radius:16px;border:1px solid var(--border);background:#fff;margin-bottom:12px}
+.inv-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.inv-name{font-size:14px;font-weight:700;color:var(--t1)}.inv-type{font-size:11px;color:var(--t3);font-weight:600}
+.inv-val{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--green)}
+.inv-metrics{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+.inv-m{font-size:12px;color:var(--t3)}.inv-m strong{color:var(--t1)}
+.chart-wrap{display:flex;align-items:flex-end;gap:6px}.chart-bar{border-radius:4px;transform-origin:bottom}
+.chart-label{font-size:10px;color:var(--t3);font-weight:600}
+.chart-legend{display:flex;gap:10px;font-size:10px;color:var(--t3)}
+.chart-dot{width:7px;height:7px;border-radius:2px;display:inline-block}
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:24px}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+@media(max-width:500px){.device-bar{display:none}.frame{width:100%!important;margin:0!important;border:none!important;border-radius:0!important;min-height:100vh}.frame .sidebar{display:none!important}.main{width:100%}}
+</style>
+</head>
+<body>
+<div class="device-bar">
+<button class="device-btn active" data-device="mobile" onclick="setDevice('mobile')"><span>📱</span> Mobile <span class="size">(390px)</span></button>
+<button class="device-btn" data-device="tablet" onclick="setDevice('tablet')"><span>📟</span> Tablet <span class="size">(820px)</span></button>
+<button class="device-btn" data-device="desktop" onclick="setDevice('desktop')"><span>🖥️</span> Desktop <span class="size">(1200px)</span></button>
+</div>
+<div class="frame mobile" id="frame">
+<nav class="sidebar hidden" id="sidebar">
+<div class="logo-wrap"><div class="logo-icon">S</div><span class="logo-text" id="logo-text">SimpleFinance</span></div>
+<div class="sidebar-nav" id="sidebar-nav"></div>
+<div class="sidebar-footer" id="sidebar-footer"><div class="avatar">P</div><div id="sidebar-user"><p style="font-size:13px;font-weight:700;color:#e2e8f0">Piero</p><p style="font-size:11px;color:#64748b">Premium</p></div></div>
+</nav>
+<div class="main mobile" id="main">
+<div class="sync-ind" id="sync-ind"><span class="sd on"></span><span id="sync-text">Conectando...</span></div>
+<div id="toast" class="toast hidden"></div>
+<div class="main-inner" id="main-inner">
+<header class="header"><div><p class="header-date" id="header-date"></p><h1 class="header-title" id="header-title">Mi Resumen</h1></div><div class="avatar" id="header-avatar">P</div></header>
+<div id="vc"></div>
+</div>
+<nav class="bn" id="bn"><div class="bni" id="bni"></div></nav>
+<button class="fab cf hidden" id="cf" onclick="openModal()">+</button>
+</div>
+<div class="mo mobile hidden" id="mo" onclick="closeModal()">
+<div class="mb mobile" id="mbox" onclick="event.stopPropagation()">
+<div class="mh"><h3 class="mt" id="modal-title">Nueva Transaccion</h3><button class="mc" onclick="closeModal()">&#x2715;</button></div>
+<div id="modal-body"></div>
+</div>
+</div>
+</div>
+<div class="co hidden" id="co"><div class="cbox"><h3 id="co-t">Confirmar</h3><p id="co-m">No se puede deshacer.</p><div class="cbtns"><button class="cbtn-c" onclick="closeCo()">Cancelar</button><button class="cbtn-d" id="co-a" onclick="execCo()">Eliminar</button></div></div></div>
+
+<script>
+// ════════════════════════════════════════════
+// FIREBASE
+// ════════════════════════════════════════════
+firebase.initializeApp({apiKey:"AIzaSyAO4e9V_t9oyE_rrWJg9smeD4X6GPHSJ6w",authDomain:"simple-finance-5cd8d.firebaseapp.com",projectId:"simple-finance-5cd8d",storageBucket:"simple-finance-5cd8d.firebasestorage.app",messagingSenderId:"440080124392",appId:"1:440080124392:web:80a8be866c8aab6359fc5d"});
+const db=firebase.firestore();
+
+// ════════════════════════════════════════════
+// DATA & STATE
+// ════════════════════════════════════════════
+const ECAT=[{id:"food",l:"Alimentacion",i:"🍽️",c:"#f43f5e"},{id:"transport",l:"Transporte",i:"🚌",c:"#a855f7"},{id:"housing",l:"Vivienda",i:"🏠",c:"#f97316"},{id:"services",l:"Servicios",i:"📡",c:"#06b6d4"},{id:"entertainment",l:"Ocio",i:"🎬",c:"#ec4899"},{id:"health",l:"Salud",i:"🏥",c:"#14b8a6"},{id:"education",l:"Educacion",i:"📚",c:"#6366f1"},{id:"shopping",l:"Compras",i:"🛒",c:"#8b5cf6"},{id:"emergency",l:"Emergencia",i:"🚨",c:"#f59e0b"},{id:"other_exp",l:"Otro gasto",i:"📋",c:"#64748b"}];
+const ICAT=[{id:"salary",l:"Sueldo",i:"💰",c:"#10b981"},{id:"bonus",l:"Bono",i:"🎉",c:"#06b6d4"},{id:"freelance",l:"Freelance",i:"💻",c:"#8b5cf6"},{id:"prize",l:"Premio",i:"🏆",c:"#f59e0b"},{id:"profits",l:"Utilidades",i:"📈",c:"#0ea5e9"},{id:"rental",l:"Arriendo",i:"🏢",c:"#a855f7"},{id:"refund",l:"Devolucion",i:"🔄",c:"#14b8a6"},{id:"gift",l:"Regalo",i:"🎁",c:"#ec4899"},{id:"invest_ret",l:"Retorno",i:"🌱",c:"#059669"},{id:"other_inc",l:"Otro",i:"➕",c:"#64748b"}];
+const ACAT=[...ECAT,...ICAT];
+const TIPS=[
+{i:"💡",t:"Regla 50/30/20",d:"Destina 50% a necesidades, 30% a deseos y 20% a ahorro e inversion. Revisa si tus gastos siguen esta proporcion.",bg:"#0ea5e908",bc:"#0ea5e920"},
+{i:"🎯",t:"Fondo de emergencia",d:"Antes de invertir, ten al menos 3 meses de gastos cubiertos en una cuenta de facil acceso.",bg:"#10b98108",bc:"#10b98120"},
+{i:"📊",t:"Registra todo",d:"Cada gasto cuenta. Los gastos hormiga (cafe, snacks) pueden sumar mas de $100.000/mes sin que lo notes.",bg:"#f59e0b08",bc:"#f59e0b20"},
+{i:"🔄",t:"Automatiza el ahorro",d:"Programa una transferencia automatica el dia de pago. Lo que no ves, no lo gastas.",bg:"#a855f708",bc:"#a855f720"},
+{i:"❌",t:"Evita deuda de consumo",d:"Las tarjetas de credito con interes rotativo son el mayor destructor de patrimonio. Paga el total siempre.",bg:"#f43f5e08",bc:"#f43f5e20"},
+{i:"📈",t:"Interes compuesto",d:"Invertir $100.000/mes al 8% anual genera mas de $18 millones en 10 anos. Empieza cuanto antes.",bg:"#06b6d408",bc:"#06b6d420"},
+];
+
+let txs=[],credits=[],quotes=[],investments=[];
+let curDev="mobile",curView="dashboard",formType="expense",formCat="food";
+let editId=null,editCol=null,coCb=null;
+
+const VIEWS=[{id:"dashboard",l:"Dashboard",e:"🏠",ni:"⬡",nl:"Inicio"},{id:"transactions",l:"Movimientos",e:"↕️",ni:"↕",nl:"Movimientos"},{id:"credits",l:"Creditos",e:"💳",ni:"◎",nl:"Creditos"},{id:"comparator",l:"Comparador",e:"⚖️",ni:"⚖",nl:"Comparar"},{id:"invest",l:"Inversiones",e:"🌱",ni:"△",nl:"Inversiones"}];
+
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+const fmt=n=>"$"+Math.abs(n).toLocaleString("es-CL");
+const $=id=>document.getElementById(id);
+const gc=id=>ACAT.find(c=>c.id===id)||{id:"?",l:"Otro",i:"❓",c:"#94a3b8"};
+const isM=()=>curDev==="mobile",isT=()=>curDev==="tablet",isD=()=>curDev==="desktop",isW=()=>isD()||isT();
+const bal=()=>txs.reduce((s,t)=>s+t.amount,0);
+const totI=()=>txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+const totE=()=>txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0);
+
+function toast(m){const t=$("toast");t.textContent="✓ "+m;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),2400)}
+function setSS(s,t){$("sync-ind").querySelector(".sd").className="sd "+s;$("sync-text").textContent=t}
+function showCo(t,m,b,cb){$("co-t").textContent=t;$("co-m").textContent=m;$("co-a").textContent=b;coCb=cb;$("co").classList.remove("hidden")}
+function closeCo(){$("co").classList.add("hidden");coCb=null}
+function execCo(){if(coCb)coCb();closeCo()}
+
+function calcPmt(p,r,n){if(r===0)return p/n;const mr=r/100/12;return p*mr*Math.pow(1+mr,n)/(Math.pow(1+mr,n)-1)}
+
+// ════════════════════════════════════════════
+// FIREBASE CRUD
+// ════════════════════════════════════════════
+async function fbLoad(col){
+  try{const s=await db.collection(col).orderBy("_ts","desc").get();return s.docs.map(d=>({_id:d.id,...d.data()}))}catch(e){console.error(e);return[]}
+}
+async function fbSave(col,data){
+  setSS("sync","Guardando...");
+  try{const id=data._id||String(Date.now());delete data._id;await db.collection(col).doc(id).set({...data,_ts:firebase.firestore.FieldValue.serverTimestamp()});setSS("on","Guardado");setTimeout(()=>setSS("on","Conectado"),1200);return id}catch(e){console.error(e);setSS("off","Error");return null}
+}
+async function fbDel(col,id){
+  setSS("sync","Eliminando...");
+  try{await db.collection(col).doc(id).delete();setSS("on","Eliminado");setTimeout(()=>setSS("on","Conectado"),1200)}catch(e){console.error(e);setSS("off","Error")}
+}
+async function fbDelAll(col){
+  const s=await db.collection(col).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();
+}
+
+async function loadAll(){
+  setSS("sync","Cargando...");
+  txs=await fbLoad("transactions");
+  credits=await fbLoad("credits");
+  quotes=await fbLoad("quotes");
+  investments=await fbLoad("investments");
+  setSS("on","Conectado");
+  render();
+}
+
+// ════════════════════════════════════════════
+// DEVICE / NAV
+// ════════════════════════════════════════════
+function setDevice(d){
+  curDev=d;$("frame").className="frame "+d;
+  document.querySelectorAll(".device-btn").forEach(b=>b.classList.toggle("active",b.dataset.device===d));
+  const sb=$("sidebar");if(isM())sb.classList.add("hidden");else{sb.classList.remove("hidden");sb.className="sidebar "+d}
+  $("logo-text").classList.toggle("hidden",isT());$("sidebar-user").classList.toggle("hidden",isT());
+  $("main").className="main "+d;$("header-avatar").classList.toggle("hidden",!isM());
+  $("bn").classList.toggle("hidden",!isM());$("cf").classList.toggle("hidden",isM());
+  const mo=$("mo");mo.className="mo hidden "+d;$("mbox").className="mb "+d;
+  render();
+}
+function nav(v){curView=v;render()}
+function buildSB(){$("sidebar-nav").innerHTML=VIEWS.map(v=>`<button class="sidebar-btn ${curView===v.id?'active':''}" onclick="nav('${v.id}')"><span class="emoji">${v.e}</span><span class="sl">${v.l}</span></button>`).join("");if(isT())document.querySelectorAll(".sl").forEach(l=>l.style.display="none")}
+function buildBN(){$("bni").innerHTML=VIEWS.map(v=>`<button class="nb ${curView===v.id?'active':''}" onclick="nav('${v.id}')"><span class="icon" style="font-weight:${curView===v.id?800:400}">${v.ni}</span><span class="label">${v.nl}</span></button>`).join("")+`<button class="fab mf" onclick="openModal()">+</button>`}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+function render(){
+  $("header-date").textContent=new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"});
+  const t={dashboard:"Mi Resumen",transactions:"Movimientos",credits:"Creditos y Servicios",comparator:"Comparador Financiero",invest:"Mis Inversiones"};
+  $("header-title").textContent=t[curView];buildSB();buildBN();
+  $("vc").innerHTML={dashboard:rDash,transactions:rTx,credits:rCred,comparator:rComp,invest:rInv}[curView]();
+}
+
+// ─── DASHBOARD ───
+function rDash(){
+  const d=isW(),b=bal(),i=totI(),e=totE();
+  const stats=[{l:"BALANCE",v:fmt(b),c:b>=0?"#10b981":"#f43f5e",s:b>=0?"Positivo":"Negativo",ic:"💰"},{l:"INGRESOS",v:fmt(i),c:"#10b981",s:"Total acumulado",ic:"📈"},{l:"GASTOS",v:fmt(e),c:"#f43f5e",s:"Total acumulado",ic:"📉"}];
+  let h=`<div class="sg ${d?'s3':'s1'}">${stats.map((s,i)=>`<div class="sc fade-in" style="border-left-color:${s.c};animation-delay:${i*.07}s"><div class="inn"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="lbl">${s.l}</span><span style="font-size:18px">${s.ic}</span></div><p class="val">${s.v}</p><p class="sub" style="color:${s.c}">${s.s}</p></div></div>`).join("")}</div>`;
+
+  // Smart tips based on data
+  h+=`<div class="card" style="margin-bottom:18px;border-left:4px solid var(--accent)"><h3 class="card-t">💡 Consejos para tus Finanzas</h3>`;
+  const tipIdx=[];
+  if(Math.abs(e)>i*0.8&&i>0)tipIdx.push(0); // spending > 80%
+  if(credits.filter(c=>c.status==="pending").length>0)tipIdx.push(4);
+  if(investments.length===0)tipIdx.push(5);
+  if(b<0)tipIdx.push(1);
+  tipIdx.push(2,3);
+  const shownTips=[...new Set(tipIdx)].slice(0,3);
+  shownTips.forEach(idx=>{const t=TIPS[idx];h+=`<div class="tip-card" style="background:${t.bg};border-color:${t.bc}"><span class="tip-icon">${t.i}</span><div class="tip-text"><h4>${t.t}</h4><p>${t.d}</p></div></div>`});
+  h+=`</div>`;
+
+  h+=`<div class="tc ${d?'s2':'s1'}">`;
+  // Credits summary
+  h+=`<div class="card"><h3 class="card-t">📋 Creditos Activos</h3>`;
+  if(credits.length===0){h+=`<p style="font-size:13px;color:var(--t3);text-align:center;padding:20px">Sin creditos registrados</p>`}
+  else{credits.slice(0,3).forEach(cr=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;border-radius:10px;background:var(--bg3);border:1px solid var(--border)"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${cr.icon||'📄'}</span><div><p style="font-size:12px;font-weight:600;color:var(--t1)">${cr.name}</p><p style="font-size:10px;color:var(--t3)">${cr.detail||''}</p></div></div><div style="text-align:right"><p style="font-size:13px;font-weight:700">${fmt(cr.amount)}</p><span class="badge ${cr.status||'pending'}">${cr.status==='paid'?'PAGADO':cr.status==='upcoming'?'PROXIMO':'PENDIENTE'}</span></div></div>`})}
+  h+=`</div>`;
+  // Investments summary
+  h+=`<div class="card"><h3 class="card-t">🌱 Inversiones</h3>`;
+  if(investments.length===0){h+=`<p style="font-size:13px;color:var(--t3);text-align:center;padding:20px">Sin inversiones registradas</p>`}
+  else{const totInv=investments.reduce((s,v)=>s+v.amount,0);
+  h+=`<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#10b98108,#0ea5e905);border-radius:12px;border:1px solid #10b98120;margin-bottom:10px"><p style="font-size:11px;color:var(--t3);font-weight:600">PATRIMONIO INVERTIDO</p><p style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--green);margin-top:4px">${fmt(totInv)}</p></div>`;
+  investments.slice(0,3).forEach(inv=>{h+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px"><span style="color:var(--t2)">${inv.name}</span><span style="font-weight:700;color:var(--green)">${fmt(inv.amount)}</span></div>`})}
+  h+=`</div></div>`;
+
+  // Recent txs
+  h+=`<div style="margin-top:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><p style="font-size:13px;font-weight:700">Ultimos movimientos</p><button style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer" onclick="nav('transactions')">Ver todos →</button></div>`;
+  if(txs.length===0)h+=`<div class="es"><div class="ei">📭</div><p class="et">Sin movimientos</p><p class="esub">Presiona + para registrar</p></div>`;
+  else h+=`<div class="tg ${d?'s2':'s1'}">${txs.slice(0,4).map((t,i)=>txRow(t,i)).join("")}</div>`;
+  h+=`</div>`;
+  return h;
+}
+
+// ─── TRANSACTIONS ───
+function rTx(){
+  if(txs.length===0)return`<div class="es"><div class="ei">📭</div><p class="et">Sin movimientos</p><p class="esub">Presiona + para registrar tu primera transaccion</p></div>`;
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><p style="font-size:13px;color:var(--t3)">${txs.length} transaccion${txs.length!==1?'es':''}</p><button class="bd" style="width:auto;padding:8px 16px;font-size:12px" onclick="resetCol('transactions','txs')">🗑 Resetear</button></div>`;
+  h+=`<div class="tg ${isW()?'s2':'s1'}">${txs.map((t,i)=>txRow(t,i,true)).join("")}</div>`;
+  return h;
+}
+function txRow(tx,i,showCat=false){
+  const c=gc(tx.cat),neg=tx.amount<0;
+  return`<div class="tr fade-in" style="animation-delay:${i*.03}s"><div class="left"><span class="emoji">${c.i}</span><div><p class="desc">${tx.desc}</p><p class="date">${showCat?c.l+' - ':''}${tx.date||''}</p></div></div><div class="right"><p class="amt ${neg?'neg':'pos'}">${neg?'-':'+'} ${fmt(tx.amount)}</p><button class="ib edit" onclick="editItem('transactions','${tx._id}')">✏️</button><button class="ib del" onclick="delItem('transactions','${tx._id}','${tx.desc}')">🗑</button></div></div>`;
+}
+
+// ─── CREDITS ───
+function rCred(){
+  const tot=credits.reduce((s,c)=>s+c.amount,0);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><p style="font-size:13px;color:var(--t3)">Total comprometido: <strong style="color:var(--orange)">${fmt(tot)}</strong></p><button class="bp" style="width:auto;padding:10px 20px;font-size:13px" onclick="openModalFor('credits')">+ Agregar Credito</button></div>`;
+  if(credits.length===0)return h+`<div class="es"><div class="ei">💳</div><p class="et">Sin creditos</p><p class="esub">Agrega tus creditos y servicios para llevar el control</p></div>`;
+  h+=`<div class="tg ${isW()?'s2':'s1'}">`;
+  credits.forEach((cr,i)=>{
+    h+=`<div class="card fade-in" style="animation-delay:${i*.06}s"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;gap:12px;align-items:center;flex:1"><span style="font-size:26px">${cr.icon||'📄'}</span><div><p style="font-size:14px;font-weight:700">${cr.name}</p><p style="font-size:11px;color:var(--t3);margin-top:2px">${cr.detail||''}</p></div></div><div style="text-align:right"><p style="font-size:17px;font-weight:700;font-family:'Fraunces',serif">${fmt(cr.amount)}</p><span class="badge ${cr.status||'pending'}">${cr.status==='paid'?'PAGADO':cr.status==='upcoming'?'PROXIMO':'PENDIENTE'}</span><div style="margin-top:8px;display:flex;gap:4px;justify-content:flex-end"><button class="ib edit" onclick="editItem('credits','${cr._id}')">✏️</button><button class="ib del" onclick="delItem('credits','${cr._id}','${cr.name}')">🗑</button></div></div></div></div>`;
+  });
+  h+=`</div>`;return h;
+}
+
+// ─── COMPARATOR ───
+function rComp(){
+  let h=`<p style="font-size:13px;color:var(--t3);margin-bottom:16px">Agrega cotizaciones de credito para compararlas y encontrar la mejor opcion.</p>`;
+  h+=`<button class="bp" style="margin-bottom:18px" onclick="openModalFor('quotes')">+ Agregar Cotizacion de Credito</button>`;
+
+  if(quotes.length===0)return h+`<div class="es"><div class="ei">⚖️</div><p class="et">Sin cotizaciones</p><p class="esub">Agrega al menos 2 cotizaciones para compararlas</p></div>`;
+
+  // Find winner (lowest total cost)
+  const withCalc=quotes.map(q=>{const pmt=q.cuota||calcPmt(q.monto,q.tasa,q.plazo);const total=pmt*q.plazo;const interest=total-q.monto;return{...q,pmt,total,interest}});
+  const minTotal=Math.min(...withCalc.map(q=>q.total));
+
+  h+=`<div class="tg s1">`;
+  withCalc.forEach((q,i)=>{
+    const isWin=q.total===minTotal&&quotes.length>1;
+    h+=`<div class="qt-card ${isWin?'qt-winner':''} fade-in" style="animation-delay:${i*.06}s">`;
+    h+=`<div class="qt-header"><div><span class="qt-bank">${q.banco||'Credito '+(i+1)}</span>${q.producto?`<span style="font-size:11px;color:var(--t3);margin-left:8px">${q.producto}</span>`:''}</div><div style="display:flex;align-items:center;gap:6px">${isWin?'<span class="qt-winner-badge">✓ MEJOR</span>':''}<button class="ib edit" onclick="editItem('quotes','${q._id}')">✏️</button><button class="ib del" onclick="delItem('quotes','${q._id}','${q.banco||"cotizacion"}')">🗑</button></div></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Monto</span><span class="qt-mv">${fmt(q.monto)}</span></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Tasa anual</span><span class="qt-mv">${q.tasa}%</span></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Plazo</span><span class="qt-mv">${q.plazo} meses</span></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Cuota mensual</span><span class="qt-mv" style="color:var(--accent)">${fmt(q.pmt)}</span></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Total intereses</span><span class="qt-mv" style="color:var(--orange)">${fmt(q.interest)}</span></div>`;
+    h+=`<div class="qt-metric"><span class="qt-ml">Costo total</span><span class="qt-mv" style="font-size:16px;color:${isWin?'var(--green)':'var(--red)'}">${fmt(q.total)}</span></div>`;
+    if(q.seguro)h+=`<div class="qt-metric"><span class="qt-ml">Seguro desgravamen</span><span class="qt-mv">${fmt(q.seguro)}/mes</span></div>`;
+    if(q.notas)h+=`<p style="font-size:11px;color:var(--t3);margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9">📝 ${q.notas}</p>`;
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+
+  if(quotes.length>=2){
+    const best=withCalc.find(q=>q.total===minTotal);
+    const worst=withCalc.find(q=>q.total===Math.max(...withCalc.map(q=>q.total)));
+    const saved=worst.total-best.total;
+    h+=`<div class="verdict"><h4>💡 Analisis</h4><p><strong>${best.banco||'La mejor opcion'}</strong> te ahorra <strong style="color:var(--green)">${fmt(saved)}</strong> comparado con la alternativa mas cara. `;
+    if(best.pmt>worst.pmt)h+=`Aunque la cuota es mas alta (${fmt(best.pmt)} vs ${fmt(worst.pmt)}), el menor plazo o tasa resulta en un ahorro significativo en el total.`;
+    h+=`</p></div>`;
+  }
+  return h;
+}
+
+// ─── INVESTMENTS ───
+function rInv(){
+  const totInv=investments.reduce((s,v)=>s+v.amount,0);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><p style="font-size:11px;color:var(--t3);font-weight:600;letter-spacing:1px">PATRIMONIO INVERTIDO</p><p style="font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--green);margin-top:4px">${fmt(totInv)}</p></div><button class="bp" style="width:auto;padding:10px 20px;font-size:13px" onclick="openModalFor('investments')">+ Agregar Inversion</button></div>`;
+
+  if(investments.length===0)return h+`<div class="es"><div class="ei">🌱</div><p class="et">Sin inversiones</p><p class="esub">Registra tus inversiones para hacer seguimiento de tu patrimonio</p></div>`;
+
+  h+=`<div class="tg ${isW()?'s2':'s1'}">`;
+  investments.forEach((inv,i)=>{
+    h+=`<div class="inv-card fade-in" style="animation-delay:${i*.06}s"><div class="inv-header"><div><span class="inv-name">${inv.name}</span><br><span class="inv-type">${inv.tipo||'Inversion'}</span></div><div style="display:flex;gap:4px"><button class="ib edit" onclick="editItem('investments','${inv._id}')">✏️</button><button class="ib del" onclick="delItem('investments','${inv._id}','${inv.name}')">🗑</button></div></div>`;
+    h+=`<p class="inv-val">${fmt(inv.amount)}</p>`;
+    h+=`<div class="inv-metrics">`;
+    if(inv.tasa)h+=`<span class="inv-m">Renta: <strong>${inv.tasa}% anual</strong></span>`;
+    if(inv.plazo)h+=`<span class="inv-m">Plazo: <strong>${inv.plazo}</strong></span>`;
+    if(inv.entidad)h+=`<span class="inv-m">En: <strong>${inv.entidad}</strong></span>`;
+    h+=`</div>`;
+    if(inv.notas)h+=`<p style="font-size:11px;color:var(--t3);margin-top:8px">📝 ${inv.notas}</p>`;
+    h+=`</div>`;
+  });
+  h+=`</div>`;return h;
+}
+
+// ════════════════════════════════════════════
+// MODAL SYSTEM
+// ════════════════════════════════════════════
+function openModal(){
+  editId=null;editCol=null;
+  if(curView==="credits")return openModalFor("credits");
+  if(curView==="comparator")return openModalFor("quotes");
+  if(curView==="invest")return openModalFor("investments");
+  openModalFor("transactions");
+}
+
+function openModalFor(col){
+  editCol=col;const mo=$("mo");mo.classList.remove("hidden");
+  $("modal-title").textContent=editId?"Editar":"Nuevo/a";
+  let h="";
+
+  if(col==="transactions"){
+    $("modal-title").textContent=editId?"Editar Transaccion":"Nueva Transaccion";
+    const tx=editId?txs.find(t=>t._id===editId):null;
+    const ft=tx?(tx.amount>0?"income":"expense"):"expense";
+    formType=ft;formCat=tx?tx.cat:(ft==="expense"?"food":"salary");
+    h+=`<div class="tt"><button class="tb ${ft==='expense'?'ae':'off'}" onclick="sfType('expense')">Gasto</button><button class="tb ${ft==='income'?'ai':'off'}" onclick="sfType('income')">Ingreso</button></div>`;
+    h+=`<input class="fi" id="m-desc" placeholder="Descripcion" value="${tx?tx.desc:''}">`;
+    h+=`<input class="fi" id="m-amt" type="number" placeholder="Monto $" value="${tx?Math.abs(tx.amount):''}">`;
+    h+=`<input class="fi" id="m-date" type="date" value="${tx?tx.date:new Date().toISOString().slice(0,10)}">`;
+    h+=`<div class="cg" id="m-cats"></div>`;
+    h+=`<button class="bp" onclick="saveTx()">${editId?'Guardar Cambios':'Guardar Transaccion'}</button>`;
+  }
+  else if(col==="credits"){
+    $("modal-title").textContent=editId?"Editar Credito":"Nuevo Credito";
+    const cr=editId?credits.find(c=>c._id===editId):null;
+    h+=`<input class="fi" id="m-name" placeholder="Nombre (ej: Credito Hipotecario)" value="${cr?cr.name:''}">`;
+    h+=`<input class="fi" id="m-detail" placeholder="Detalle (ej: Cuota 45/120)" value="${cr?cr.detail||'':''}">`;
+    h+=`<input class="fi" id="m-amt" type="number" placeholder="Monto cuota $" value="${cr?cr.amount:''}">`;
+    h+=`<div class="fr"><select class="fi" id="m-status" style="flex:1"><option value="pending" ${cr?.status==='pending'?'selected':''}>Pendiente</option><option value="paid" ${cr?.status==='paid'?'selected':''}>Pagado</option><option value="upcoming" ${cr?.status==='upcoming'?'selected':''}>Proximo</option></select>`;
+    h+=`<select class="fi" id="m-icon" style="flex:1"><option value="🏠" ${cr?.icon==='🏠'?'selected':''}>🏠 Vivienda</option><option value="🚗" ${cr?.icon==='🚗'?'selected':''}>🚗 Auto</option><option value="📶" ${cr?.icon==='📶'?'selected':''}>📶 Internet</option><option value="💳" ${cr?.icon==='💳'?'selected':''}>💳 Tarjeta</option><option value="📱" ${cr?.icon==='📱'?'selected':''}>📱 Telefono</option><option value="⚡" ${cr?.icon==='⚡'?'selected':''}>⚡ Luz</option><option value="💧" ${cr?.icon==='💧'?'selected':''}>💧 Agua</option><option value="🔥" ${cr?.icon==='🔥'?'selected':''}>🔥 Gas</option><option value="🎓" ${cr?.icon==='🎓'?'selected':''}>🎓 Educacion</option><option value="📄" ${cr?.icon==='📄'?'selected':''}>📄 Otro</option></select></div>`;
+    h+=`<button class="bp" onclick="saveCred()">${editId?'Guardar Cambios':'Agregar Credito'}</button>`;
+  }
+  else if(col==="quotes"){
+    $("modal-title").textContent=editId?"Editar Cotizacion":"Nueva Cotizacion";
+    const q=editId?quotes.find(c=>c._id===editId):null;
+    h+=`<input class="fi" id="m-banco" placeholder="Banco o entidad (ej: Banco Estado)" value="${q?q.banco:''}">`;
+    h+=`<input class="fi" id="m-producto" placeholder="Producto (ej: Credito Consumo)" value="${q?q.producto||'':''}">`;
+    h+=`<input class="fi" id="m-monto" type="number" placeholder="Monto del credito $" value="${q?q.monto:''}">`;
+    h+=`<div class="fr"><input class="fi" id="m-tasa" type="number" step="0.01" placeholder="Tasa anual %" value="${q?q.tasa:''}"><input class="fi" id="m-plazo" type="number" placeholder="Plazo (meses)" value="${q?q.plazo:''}"></div>`;
+    h+=`<input class="fi" id="m-cuota" type="number" placeholder="Cuota mensual $ (opcional, si te la dieron)" value="${q?.cuota||''}">`;
+    h+=`<input class="fi" id="m-seguro" type="number" placeholder="Seguro desgravamen $/mes (opcional)" value="${q?.seguro||''}">`;
+    h+=`<textarea class="fi" id="m-notas" placeholder="Notas adicionales (comisiones, condiciones, etc)" style="height:70px;resize:vertical">${q?.notas||''}</textarea>`;
+    h+=`<button class="bp" onclick="saveQuote()">${editId?'Guardar Cambios':'Agregar Cotizacion'}</button>`;
+  }
+  else if(col==="investments"){
+    $("modal-title").textContent=editId?"Editar Inversion":"Nueva Inversion";
+    const inv=editId?investments.find(c=>c._id===editId):null;
+    h+=`<input class="fi" id="m-name" placeholder="Nombre (ej: Fondo Mutuo A)" value="${inv?inv.name:''}">`;
+    h+=`<select class="fi" id="m-tipo"><option value="Fondo Mutuo" ${inv?.tipo==='Fondo Mutuo'?'selected':''}>Fondo Mutuo</option><option value="Deposito a Plazo" ${inv?.tipo==='Deposito a Plazo'?'selected':''}>Deposito a Plazo</option><option value="APV" ${inv?.tipo==='APV'?'selected':''}>APV</option><option value="Acciones" ${inv?.tipo==='Acciones'?'selected':''}>Acciones</option><option value="Crypto" ${inv?.tipo==='Crypto'?'selected':''}>Crypto</option><option value="Cuenta 2 AFP" ${inv?.tipo==='Cuenta 2 AFP'?'selected':''}>Cuenta 2 AFP</option><option value="Propiedad" ${inv?.tipo==='Propiedad'?'selected':''}>Propiedad</option><option value="Otro" ${inv?.tipo==='Otro'?'selected':''}>Otro</option></select>`;
+    h+=`<input class="fi" id="m-amt" type="number" placeholder="Monto invertido $" value="${inv?inv.amount:''}">`;
+    h+=`<div class="fr"><input class="fi" id="m-tasa" type="number" step="0.1" placeholder="Rent. anual % (est.)" value="${inv?.tasa||''}"><input class="fi" id="m-plazo2" placeholder="Plazo (ej: 1 ano)" value="${inv?.plazo||''}"></div>`;
+    h+=`<input class="fi" id="m-entidad" placeholder="Entidad (ej: Fintual, BCI)" value="${inv?.entidad||''}">`;
+    h+=`<textarea class="fi" id="m-notas" placeholder="Notas" style="height:60px;resize:vertical">${inv?.notas||''}</textarea>`;
+    h+=`<button class="bp" onclick="saveInv()">${editId?'Guardar Cambios':'Agregar Inversion'}</button>`;
+  }
+
+  $("modal-body").innerHTML=h;
+  if(col==="transactions")buildMCats();
+}
+
+function closeModal(){$("mo").classList.add("hidden");editId=null;editCol=null}
+
+// Tx categories
+function sfType(t){formType=t;formCat=t==="expense"?"food":"salary";
+  const btns=$("modal-body").querySelectorAll(".tb");if(btns[0])btns[0].className="tb "+(t==="expense"?"ae":"off");if(btns[1])btns[1].className="tb "+(t==="income"?"ai":"off");buildMCats()}
+function buildMCats(){const cats=formType==="expense"?ECAT:ICAT;const el=$("m-cats");if(!el)return;el.innerHTML=cats.map(c=>`<button class="cb" style="border-color:${formCat===c.id?c.c:'#e2e8f0'};background:${formCat===c.id?c.c+'12':'transparent'};color:${formCat===c.id?c.c:'#94a3b8'}" onclick="formCat='${c.id}';buildMCats()">${c.i} ${c.l}</button>`).join("")}
+
+// ════════════════════════════════════════════
+// SAVE FUNCTIONS
+// ════════════════════════════════════════════
+async function saveTx(){
+  const desc=$("m-desc")?.value.trim(),amt=parseInt($("m-amt")?.value),date=$("m-date")?.value;
+  if(!desc||isNaN(amt)||amt<=0)return toast("Completa los campos");
+  const data={desc,amount:formType==="expense"?-amt:amt,cat:formCat,date:date||new Date().toISOString().slice(0,10)};
+  if(editId)data._id=editId;
+  const id=await fbSave("transactions",data);
+  if(id){if(editId){const idx=txs.findIndex(t=>t._id===editId);if(idx>=0)txs[idx]={_id:editId,...data}}else txs.unshift({_id:id,...data});
+  toast(editId?"Editado":"Guardado: "+desc);closeModal();render()}
+}
+
+async function saveCred(){
+  const name=$("m-name")?.value.trim(),detail=$("m-detail")?.value.trim(),amt=parseInt($("m-amt")?.value),status=$("m-status")?.value,icon=$("m-icon")?.value;
+  if(!name||isNaN(amt)||amt<=0)return toast("Completa nombre y monto");
+  const data={name,detail,amount:amt,status,icon};
+  if(editId)data._id=editId;
+  const id=await fbSave("credits",data);
+  if(id){if(editId){const idx=credits.findIndex(c=>c._id===editId);if(idx>=0)credits[idx]={_id:editId,...data}}else credits.unshift({_id:id,...data});
+  toast(editId?"Editado":"Agregado: "+name);closeModal();render()}
+}
+
+async function saveQuote(){
+  const banco=$("m-banco")?.value.trim(),producto=$("m-producto")?.value.trim(),monto=parseFloat($("m-monto")?.value),tasa=parseFloat($("m-tasa")?.value),plazo=parseInt($("m-plazo")?.value);
+  const cuota=parseFloat($("m-cuota")?.value)||0,seguro=parseFloat($("m-seguro")?.value)||0,notas=$("m-notas")?.value.trim();
+  if(!banco||isNaN(monto)||monto<=0||isNaN(tasa)||isNaN(plazo)||plazo<=0)return toast("Completa banco, monto, tasa y plazo");
+  const data={banco,producto,monto,tasa,plazo,cuota:cuota||null,seguro:seguro||null,notas};
+  if(editId)data._id=editId;
+  const id=await fbSave("quotes",data);
+  if(id){if(editId){const idx=quotes.findIndex(q=>q._id===editId);if(idx>=0)quotes[idx]={_id:editId,...data}}else quotes.unshift({_id:id,...data});
+  toast(editId?"Editado":"Agregado: "+banco);closeModal();render()}
+}
+
+async function saveInv(){
+  const name=$("m-name")?.value.trim(),tipo=$("m-tipo")?.value,amt=parseFloat($("m-amt")?.value),tasa=parseFloat($("m-tasa")?.value)||null,plazo=$("m-plazo2")?.value.trim(),entidad=$("m-entidad")?.value.trim(),notas=$("m-notas")?.value.trim();
+  if(!name||isNaN(amt)||amt<=0)return toast("Completa nombre y monto");
+  const data={name,tipo,amount:amt,tasa,plazo,entidad,notas};
+  if(editId)data._id=editId;
+  const id=await fbSave("investments",data);
+  if(id){if(editId){const idx=investments.findIndex(v=>v._id===editId);if(idx>=0)investments[idx]={_id:editId,...data}}else investments.unshift({_id:id,...data});
+  toast(editId?"Editado":"Agregado: "+name);closeModal();render()}
+}
+
+// ════════════════════════════════════════════
+// EDIT / DELETE
+// ════════════════════════════════════════════
+function editItem(col,id){editId=id;editCol=col;openModalFor(col)}
+
+function delItem(col,id,name){
+  showCo("Eliminar","Eliminar '"+name+"'? No se puede deshacer.","Eliminar",async()=>{
+    await fbDel(col,id);
+    if(col==="transactions")txs=txs.filter(t=>t._id!==id);
+    if(col==="credits")credits=credits.filter(c=>c._id!==id);
+    if(col==="quotes")quotes=quotes.filter(q=>q._id!==id);
+    if(col==="investments")investments=investments.filter(v=>v._id!==id);
+    toast("Eliminado");render();
+  });
+}
+
+function resetCol(col,varName){
+  showCo("Resetear todo","Se eliminaran TODOS los registros de esta seccion. No se puede deshacer.","Resetear",async()=>{
+    await fbDelAll(col);
+    if(varName==="txs")txs=[];if(varName==="credits")credits=[];if(varName==="quotes")quotes=[];if(varName==="investments")investments=[];
+    toast("Datos eliminados");render();
+  });
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+render();
+loadAll();
+</script>
+</body>
+</html>
