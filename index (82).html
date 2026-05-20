@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimpleFinance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --success: #10b981;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --bg-light: #ffffff;
+      --bg-lighter: #f9fafb;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-lighter);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      min-height: 100vh;
+      gap: 0;
+    }
+
+    .sidebar {
+      background: var(--gray-900);
+      color: white;
+      padding: 20px;
+      position: fixed;
+      width: 170px;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--gray-700);
+    }
+
+    .sidebar h1 {
+      font-size: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .sidebar-nav { display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px; }
+
+    .sidebar-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+
+    .sidebar-btn:hover { background: var(--gray-800); color: white; }
+    .sidebar-btn.active { background: var(--primary); color: white; }
+    .sidebar-btn .emoji { font-size: 18px; }
+
+    .main {
+      margin-left: 170px;
+      padding: 20px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .header-title { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .header-date { font-size: 13px; color: var(--text-secondary); }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-t { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #e11d48; }
+    .btn-secondary { background: var(--gray-200); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--gray-300); }
+
+    .input, textarea, select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      width: 100%;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    .input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.visible { display: flex; }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--gray-900);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state-text { color: var(--text-secondary); font-size: 14px; }
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .main { margin-left: 0; }
+      .sidebar-nav { flex-direction: row; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="sidebar">
+    <h1>💰 SF</h1>
+    <div class="sidebar-nav" id="sidebar-nav"></div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <div class="header-title" id="header-title">Mi Resumen</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <div id="view-container"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content" id="modal-body"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+// CONFIGURACIÓN FIREBASE Y VARIABLES GLOBALES
+firebase.initializeApp({
+  apiKey: "AIzaSyAO4e9V_t9oyE_rrWJg9smeD4X6GPHSJ6w",
+  authDomain: "simple-finance-5cd8d.firebaseapp.com",
+  projectId: "simple-finance-5cd8d",
+  storageBucket: "simple-finance-5cd8d.firebasestorage.app",
+  messagingSenderId: "440080124392",
+  appId: "1:440080124392:web:80a8be866c8aab6359fc5d"
+});
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+let curView = "dashboard";
+let curUser = null;
+let allUsers = [];
+let txs = [];
+let debts = [];
+let superProds = [];
+let feriaProds = [];
+
+const VIEWS = [
+  { id: "dashboard", label: "Dashboard", emoji: "🏠" },
+  { id: "movimientos", label: "Movimientos", emoji: "↕️" },
+  { id: "supermercado", label: "Supermercado", emoji: "🛒" },
+  { id: "feria", label: "Feria", emoji: "🥕" },
+  { id: "deudas", label: "Deudas", emoji: "🤝" }
+];
+
+// FUNCIONES AUXILIARES
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(n);
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function showModal(content) {
+  $('modal-body').innerHTML = content;
+  $('modal').classList.add('visible');
+}
+
+function closeModal() {
+  $('modal').classList.remove('visible');
+}
+
+// NAVEGACIÓN Y RENDERIZADO
+function nav(viewId) {
+  curView = viewId;
+  render();
+}
+
+function render() {
+  const titles = {
+    dashboard: "Mi Resumen",
+    movimientos: "Movimientos",
+    supermercado: "Historial Supermercado",
+    feria: "Historial Feria",
+    deudas: "Deudas Compartidas"
+  };
+
+  $('header-title').textContent = titles[curView] || "SimpleFinance";
+  $('header-date').textContent = new Date().toLocaleDateString('es-CL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+  document.querySelectorAll('.sidebar-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-view') === curView);
+  });
+
+  const views = {
+    dashboard: renderDashboard,
+    movimientos: renderMovimientos,
+    supermercado: renderSupermercado,
+    feria: renderFeria,
+    deudas: renderDeudas
+  };
+
+  $('view-container').innerHTML = (views[curView] || renderDashboard)();
+}
+
+// VISTAS
+function renderDashboard() {
+  let html = `<div class="card"><h2 class="card-t">📊 Resumen Financiero</h2>`;
+  html += `<p style="color: var(--text-secondary); margin-bottom: 12px;">Total transacciones: ${txs.length}</p>`;
+  html += `<p style="color: var(--text-secondary); margin-bottom: 12px;">Compras supermercado: ${superProds.length}</p>`;
+  html += `<p style="color: var(--text-secondary); margin-bottom: 20px;">Compras feria: ${feriaProds.length}</p>`;
+  html += `<button class="btn btn-primary" onclick="openAddTxModal()">➕ Agregar Movimiento</button>`;
+  html += `<button class="btn btn-success" style="margin-left:8px" onclick="openSuperModal()">🛒 Compra Supermercado</button>`;
+  html += `<button class="btn btn-primary" style="margin-left:8px" onclick="openFeriaModal()">🥕 Compra Feria</button>`;
+  html += `</div>`;
+  return html;
+}
+
+function renderMovimientos() {
+  if (txs.length === 0) {
+    return `<div class="empty-state"><div class="empty-state-icon">📋</div><p class="empty-state-text">Sin movimientos</p></div>`;
+  }
+  let html = `<div class="card"><h2 class="card-t">↕️ Movimientos</h2>`;
+  txs.forEach(tx => {
+    html += `<div style="padding:12px;background:var(--bg-lighter);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between">`;
+    html += `<div><strong>${tx.descripcion}</strong><br><small style="color:var(--text-secondary)">${tx.fecha}</small></div>`;
+    html += `<div style="text-align:right"><strong style="color:${tx.tipo === 'ingreso' ? 'var(--success)' : 'var(--danger)'}">$${fmt(tx.monto)}</strong></div>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderSupermercado() {
+  if (superProds.length === 0) {
+    return `<div class="empty-state"><div class="empty-state-icon">🛒</div><p class="empty-state-text">Sin compras</p></div>`;
+  }
+  let html = `<div class="card"><h2 class="card-t">🛒 Supermercado</h2>`;
+  superProds.forEach(p => {
+    html += `<div style="padding:12px;background:var(--bg-lighter);border-radius:8px;margin-bottom:8px">`;
+    html += `<strong>${p.producto}</strong><br>`;
+    html += `<small style="color:var(--text-secondary)">$${fmt(p.valor)} • ${p.fecha}</small>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderFeria() {
+  if (feriaProds.length === 0) {
+    return `<div class="empty-state"><div class="empty-state-icon">🥕</div><p class="empty-state-text">Sin compras en feria</p></div>`;
+  }
+  let html = `<div class="card"><h2 class="card-t">🥕 Feria</h2>`;
+  feriaProds.forEach(p => {
+    html += `<div style="padding:12px;background:var(--bg-lighter);border-radius:8px;margin-bottom:8px">`;
+    html += `<strong>${p.producto}</strong><br>`;
+    html += `<small style="color:var(--text-secondary)">$${fmt(p.valor)} • ${p.fecha}</small>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderDeudas() {
+  if (debts.length === 0) {
+    return `<div class="empty-state"><div class="empty-state-icon">🤝</div><p class="empty-state-text">Sin deudas pendientes</p></div>`;
+  }
+  let html = `<div class="card"><h2 class="card-t">🤝 Deudas Compartidas</h2>`;
+  debts.forEach(d => {
+    html += `<div style="padding:12px;background:var(--bg-lighter);border-radius:8px;margin-bottom:8px">`;
+    html += `<strong>${d.descripcion}</strong><br>`;
+    html += `<small style="color:var(--text-secondary)">$${fmt(d.amount)} • ${d.status}</small>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+// MODALES
+function openAddTxModal() {
+  let html = `<h2 class="modal-title">➕ Nuevo Movimiento</h2>`;
+  html += `<label>Descripción</label><input type="text" id="tx-desc" class="input" placeholder="Ej: Compra en tienda">`;
+  html += `<label>Monto</label><input type="number" id="tx-monto" class="input" placeholder="0">`;
+  html += `<label>Tipo</label><select id="tx-tipo" class="input"><option value="egreso">Egreso</option><option value="ingreso">Ingreso</option></select>`;
+  html += `<label>Fecha</label><input type="date" id="tx-fecha" class="input" value="${new Date().toISOString().split('T')[0]}">`;
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+  html += `<button class="btn btn-primary" onclick="saveTx()">💾 Guardar</button>`;
+  html += `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>`;
+  html += `</div>`;
+  showModal(html);
+}
+
+function openSuperModal() {
+  let html = `<h2 class="modal-title">🛒 Compra Supermercado</h2>`;
+  html += `<label>Producto</label><input type="text" id="super-producto" class="input" placeholder="Ej: Manzanas">`;
+  html += `<label>Valor</label><input type="number" id="super-valor" class="input" placeholder="0">`;
+  html += `<label>Fecha</label><input type="date" id="super-fecha" class="input" value="${new Date().toISOString().split('T')[0]}">`;
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+  html += `<button class="btn btn-success" onclick="saveSupermarketPurchase()">💾 Guardar</button>`;
+  html += `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>`;
+  html += `</div>`;
+  showModal(html);
+}
+
+function openFeriaModal() {
+  let html = `<h2 class="modal-title">🥕 Compra Feria</h2>`;
+  html += `<label>Fecha</label><input type="date" id="feria-fecha" class="input" value="${new Date().toISOString().split('T')[0]}">`;
+  html += `<label>Artículo</label><input type="text" id="feria-producto" class="input" placeholder="Ej: 1 Kilo de Tomate">`;
+  html += `<label>Valor</label><input type="number" id="feria-valor" class="input" placeholder="0">`;
+  html += `<button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="addFeriaItem()">➕ Agregar Artículo</button>`;
+  html += `<div id="feria-items" style="max-height:200px;overflow-y:auto;margin-bottom:12px"></div>`;
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+  html += `<button class="btn btn-primary" onclick="saveFeriaPurchase()">💾 Guardar</button>`;
+  html += `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>`;
+  html += `</div>`;
+  showModal(html);
+  window.feriaItems = [];
+  updateFeriaList();
+}
+
+// GUARDAR DATOS
+async function saveTx() {
+  const desc = $('tx-desc').value.trim();
+  const monto = parseInt($('tx-monto').value) || 0;
+  const tipo = $('tx-tipo').value;
+  const fecha = $('tx-fecha').value;
+
+  if (!desc || !monto || !fecha) {
+    toast('Completa todos los campos');
+    return;
+  }
+
+  try {
+    const data = { uid: curUser.uid, descripcion: desc, monto, tipo, fecha };
+    await db.collection('transactions').add(data);
+    txs.push(data);
+    toast('✓ Movimiento guardado');
+    closeModal();
+    render();
+  } catch (err) {
+    toast('Error: ' + err.message);
+  }
+}
+
+async function saveSupermarketPurchase() {
+  const producto = $('super-producto').value.trim();
+  const valor = parseInt($('super-valor').value) || 0;
+  const fecha = $('super-fecha').value;
+
+  if (!producto || !valor || !fecha) {
+    toast('Completa todos los campos');
+    return;
+  }
+
+  try {
+    const data = { uid: curUser.uid, producto, valor, fecha };
+    await db.collection('supermercado').add(data);
+    superProds.push(data);
+    toast('✓ Compra guardada');
+    closeModal();
+    render();
+  } catch (err) {
+    toast('Error: ' + err.message);
+  }
+}
+
+function addFeriaItem() {
+  const producto = $('feria-producto').value.trim();
+  const valor = parseInt($('feria-valor').value) || 0;
+
+  if (!producto || !valor) {
+    toast('Completa producto y valor');
+    return;
+  }
+
+  window.feriaItems.push({ producto, valor });
+  $('feria-producto').value = '';
+  $('feria-valor').value = '';
+  updateFeriaList();
+}
+
+function updateFeriaList() {
+  let html = '';
+  window.feriaItems.forEach((item, idx) => {
+    html += `<div style="padding:8px;background:var(--bg-lighter);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between">`;
+    html += `<div><strong>${item.producto}</strong><br><small>$${fmt(item.valor)}</small></div>`;
+    html += `<button class="btn btn-danger" style="padding:4px 8px;font-size:12px" onclick="removeFeriaItem(${idx})">✕</button>`;
+    html += `</div>`;
+  });
+  $('feria-items').innerHTML = html;
+}
+
+function removeFeriaItem(idx) {
+  window.feriaItems.splice(idx, 1);
+  updateFeriaList();
+}
+
+async function saveFeriaPurchase() {
+  const fecha = $('feria-fecha').value;
+
+  if (!fecha || window.feriaItems.length === 0) {
+    toast('Completa fecha y añade artículos');
+    return;
+  }
+
+  try {
+    for (let item of window.feriaItems) {
+      const data = { uid: curUser.uid, ...item, fecha };
+      await db.collection('feria').add(data);
+      feriaProds.push(data);
+    }
+    toast(`✓ ${window.feriaItems.length} artículos guardados`);
+    closeModal();
+    render();
+  } catch (err) {
+    toast('Error: ' + err.message);
+  }
+}
+
+// INICIALIZACIÓN
+async function loadAll() {
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    curUser = user;
+    const txSnap = await db.collection('transactions').where('uid', '==', user.uid).get();
+    txs = txSnap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+    const superSnap = await db.collection('supermercado').where('uid', '==', user.uid).get();
+    superProds = superSnap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+    const feriaSnap = await db.collection('feria').where('uid', '==', user.uid).get();
+    feriaProds = feriaSnap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+    const debtSnap = await db.collection('debts').get();
+    debts = debtSnap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+    render();
+  } catch (err) {
+    console.error('Error loading data:', err);
+  }
+}
+
+function buildSidebar() {
+  let html = '';
+  VIEWS.forEach(view => {
+    html += `<button class="sidebar-btn" data-view="${view.id}" onclick="nav('${view.id}')">`;
+    html += `<span class="emoji">${view.emoji}</span>`;
+    html += `<span>${view.label}</span>`;
+    html += `</button>`;
+  });
+  document.querySelector('.sidebar-nav').innerHTML = html;
+}
+
+function init() {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      curUser = user;
+      buildSidebar();
+      await loadAll();
+    } else {
+      auth.signInAnonymously().then(() => {
+        buildSidebar();
+        loadAll();
+      });
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+$('modal').addEventListener('click', (e) => {
+  if (e.target === $('modal')) closeModal();
+});
+</script>
+
+</body>
+</html>
